@@ -28,9 +28,6 @@ export default function () {
 
   check(response, {
     'status is successful': (r) => r.status >= 200 && r.status < 400,
-    'expected page content exists': (r) =>
-      r.body.includes(
-        'Collection of simple web-pages suitable for load testing'
-      ),
+    'expected page content exists': (r) => r.body.includes('QuickPizza'),
   });
 }
