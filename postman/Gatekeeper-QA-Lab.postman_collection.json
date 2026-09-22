@@ -1,0 +1,104 @@
+{
+  "info": {
+    "_postman_id": "0e931e81-2bd1-461f-bcd0-b909bdb81f53",
+    "name": "Gatekeeper QA Lab",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "4850183"
+  },
+  "item": [
+    {
+      "name": "Get topping catalogue",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.unset(\"toppingIds\");\n\npm.test(\"Topping catalogue is valid\", () => {\n    pm.response.to.have.status(200);\n\n    const ingredients = pm.response.json().ingredients;\n    pm.expect(ingredients).to.be.an(\"array\").and.not.empty;\n\n    ingredients.forEach(item => {\n        pm.expect(item.ID).to.be.a(\"number\");\n    });\n\n    pm.collectionVariables.set(\n        \"toppingIds\",\n        JSON.stringify(ingredients.map(item => item.ID))\n    );\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "token abcdef0123456789"
+          }
+        ],
+        "url": {
+          "raw": "https://quickpizza.grafana.com/api/ingredients/topping",
+          "protocol": "https",
+          "host": [
+            "quickpizza",
+            "grafana",
+            "com"
+          ],
+          "path": [
+            "api",
+            "ingredients",
+            "topping"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Generate vegetarian pizza",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();\n\npm.test(\"Status is 200\", () => {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Pizza response has the expected structure\", () => {\n    pm.expect(body.pizza).to.be.an(\"object\");\n    pm.expect(body.pizza.id).to.be.a(\"number\");\n    pm.expect(body.pizza.name).to.be.a(\"string\").and.not.empty;\n    pm.expect(body.pizza.ingredients).to.be.an(\"array\").and.not.empty;\n    pm.expect(body.calories).to.be.a(\"number\");\n    pm.expect(body.vegetarian).to.be.a(\"boolean\");\n});\n\npm.test(\"Pizza and every ingredient are vegetarian\", () => {\n    pm.expect(body.vegetarian).to.equal(true);\n\n    body.pizza.ingredients.forEach(ingredient => {\n        pm.expect(ingredient.vegetarian, ingredient.name).to.equal(true);\n    });\n});\n\npm.test(\"Anchovies and bacon are excluded\", () => {\n    body.pizza.ingredients.forEach(ingredient => {\n        const name = ingredient.name.toLowerCase();\n        pm.expect(name).not.to.include(\"anchov\");\n        pm.expect(name).not.to.include(\"bacon\");\n    });\n});\n\npm.test(\"Calories stay within the requested limit\", () => {\n    pm.expect(body.calories).to.be.at.least(0);\n    pm.expect(body.calories).to.be.at.most(800);\n});\n\npm.test(\"Topping count follows requested limits\", () => {\n    const savedIds = pm.collectionVariables.get(\"toppingIds\");\n    pm.expect(savedIds, \"Run Get topping catalogue first\")\n        .to.be.a(\"string\").and.not.empty;\n\n    const toppingIds = new Set(JSON.parse(savedIds));\n    const restrictions = JSON.parse(pm.request.body.raw);\n\n    const toppings = body.pizza.ingredients.filter(\n        ingredient => toppingIds.has(ingredient.ID)\n    );\n\n    pm.expect(toppings.length).to.be.within(\n        restrictions.minNumberOfToppings,\n        restrictions.maxNumberOfToppings\n    );\n});\n\npm.test(\"Dough is present and valid\", () => {\n    pm.expect(body.pizza.dough).to.be.an(\"object\");\n    pm.expect(body.pizza.dough.name).to.be.a(\"string\");\n    pm.expect(body.pizza.dough.caloriesPerSlice).to.be.a(\"number\");\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "token abcdef0123456789"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"maxCaloriesPerSlice\": 800,\n  \"mustBeVegetarian\": true,\n  \"excludedIngredients\": [\"anchovies\", \"bacon\"],\n  \"excludedTools\": [],\n  \"maxNumberOfToppings\": 4,\n  \"minNumberOfToppings\": 2\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://quickpizza.grafana.com/api/pizza",
+          "protocol": "https",
+          "host": [
+            "quickpizza",
+            "grafana",
+            "com"
+          ],
+          "path": [
+            "api",
+            "pizza"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "toppingIds",
+      "value": ""
+    }
+  ]
+}
