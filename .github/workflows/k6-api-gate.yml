@@ -26,3 +26,9 @@ jobs:
         with:
           path: ./performance/pizza-api-load-test.js
           fail-fast: true
+
+      - name: mixed-authentication quality gate
+        uses: grafana/run-k6-action@v1
+        with:
+          path: ./performance/
+          
