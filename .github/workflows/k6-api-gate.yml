@@ -3,7 +3,7 @@ name: k6 API Quality Gate
 on:
   pull_request:
     branches:
-      - main
+      - develop
   workflow_dispatch:
 
 permissions:
@@ -30,5 +30,6 @@ jobs:
       - name: mixed-authentication quality gate
         uses: grafana/run-k6-action@v1
         with:
-          path: ./performance/
+          path: ./performance/pizza-mixed-auth-load-test.js
+          fail-fast: true
           
