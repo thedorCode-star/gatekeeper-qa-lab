@@ -1,0 +1,4 @@
+caseName,maxCalories,mustBeVegetarian,excludedIngredient,minToppings,maxToppings
+vegetarian_without_bacon,800,true,bacon,2,4
+vegetarian_without_anchovies,650,true,anchovies,1,3
+vegetarian_without_ham,700,true,ham,2,5

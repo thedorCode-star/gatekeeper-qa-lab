@@ -1,0 +1,60 @@
+{
+  "info": {
+    "_postman_id": "5b03943e-c990-47d5-a7e2-b5a7a22618a1",
+    "name": "Pizza Data-Driven Regression",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "4850183"
+  },
+  "item": [
+    {
+      "name": "Generate pizza — data-driven restrictions",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const caseName = pm.iterationData.get(\"caseName\");\nconst maxCalories = Number(pm.iterationData.get(\"maxCalories\"));\nconst mustBeVegetarian =\n  String(pm.iterationData.get(\"mustBeVegetarian\")).toLowerCase() === \"true\";\nconst excludedIngredient = String(\n  pm.iterationData.get(\"excludedIngredient\")\n).toLowerCase();\n\npm.test(`${caseName}: status is 200`, function () {\n  pm.response.to.have.status(200);\n});\n\npm.test(`${caseName}: response contract is valid`, function () {\n  const body = pm.response.json();\n\n  pm.expect(body.pizza).to.be.an(\"object\");\n  pm.expect(body.pizza.name).to.be.a(\"string\").and.not.empty;\n  pm.expect(body.pizza.ingredients).to.be.an(\"array\").and.not.empty;\n  pm.expect(body.calories).to.be.a(\"number\");\n  pm.expect(body.vegetarian).to.be.a(\"boolean\");\n\n  for (const ingredient of body.pizza.ingredients) {\n    pm.expect(ingredient.name).to.be.a(\"string\").and.not.empty;\n    pm.expect(ingredient.vegetarian).to.be.a(\"boolean\");\n  }\n});\n\npm.test(`${caseName}: vegetarian restriction is respected`, function () {\n  const body = pm.response.json();\n\n  if (mustBeVegetarian) {\n    pm.expect(body.vegetarian).to.equal(true);\n    pm.expect(body.pizza.ingredients).to.be.an(\"array\").and.not.empty;\n\n    for (const ingredient of body.pizza.ingredients) {\n      pm.expect(ingredient.vegetarian).to.equal(true);\n    }\n  }\n});\n\npm.test(`${caseName}: excluded ingredient is absent`, function () {\n  const body = pm.response.json();\n  pm.expect(body.pizza.ingredients).to.be.an(\"array\").and.not.empty;\n\n  const names = body.pizza.ingredients.map(\n    ingredient => ingredient.name.toLowerCase()\n  );\n\n  pm.expect(names).to.not.include(excludedIngredient);\n});\n\npm.test(`${caseName}: calorie limit is respected`, function () {\n  const body = pm.response.json();\n\n  pm.expect(maxCalories).to.be.above(0);\n  pm.expect(body.calories).to.be.a(\"number\");\n  pm.expect(body.calories).to.be.at.least(0);\n  pm.expect(body.calories).to.be.at.most(maxCalories);\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "token abcdef0123456789"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"maxCaloriesPerSlice\": {{maxCalories}},\n  \"mustBeVegetarian\": {{mustBeVegetarian}},\n  \"excludedIngredients\": [\"{{excludedIngredient}}\"],\n  \"excludedTools\": [],\n  \"maxNumberOfToppings\": {{maxToppings}},\n  \"minNumberOfToppings\": {{minToppings}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://quickpizza.grafana.com/api/pizza",
+          "protocol": "https",
+          "host": [
+            "quickpizza",
+            "grafana",
+            "com"
+          ],
+          "path": [
+            "api",
+            "pizza"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
