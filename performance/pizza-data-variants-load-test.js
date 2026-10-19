@@ -57,16 +57,16 @@ export const options = {
         maxVUs: 4,
       },
     },
-  
+
     thresholds: {
       'checks{case_name:vegetarian_without_bacon}': ['rate>0.99'],
       'checks{case_name:vegetarian_without_anchovies}': ['rate>0.99'],
       'checks{case_name:vegetarian_without_ham}': ['rate>0.99'],
-  
+
       'http_req_duration{case_name:vegetarian_without_bacon}': ['p(95)<1500'],
       'http_req_duration{case_name:vegetarian_without_anchovies}': ['p(95)<1500'],
       'http_req_duration{case_name:vegetarian_without_ham}': ['p(95)<1500'],
-  
+
       http_req_failed: ['rate<0.01'],
       dropped_iterations: ['count==0'],
     },
@@ -75,15 +75,15 @@ export const options = {
   export function testWithoutBacon() {
     runPizzaCase(pizzaCases.withoutBacon);
   }
-  
+
   export function testWithoutAnchovies() {
     runPizzaCase(pizzaCases.withoutAnchovies);
   }
-  
+
   export function testWithoutHam() {
     runPizzaCase(pizzaCases.withoutHam);
   }
-  
+
   function runPizzaCase(testCase) {
     const payload = JSON.stringify({
       maxCaloriesPerSlice: testCase.maxCalories,
@@ -93,12 +93,12 @@ export const options = {
       minNumberOfToppings: testCase.minToppings,
       maxNumberOfToppings: testCase.maxToppings,
     });
-  
+
     const tags = {
       name: 'generate_pizza',
       case_name: testCase.caseName,
     };
-  
+
     const response = http.post(url, payload, {
       headers: {
         'Content-Type': 'application/json',
@@ -106,17 +106,17 @@ export const options = {
       },
       tags,
     });
-  
+
     let body = null;
-  
+
     try {
       body = response.json();
     } catch {
       // The checks below report an invalid JSON response as a failure.
     }
-  
+
     const ingredients = body?.pizza?.ingredients;
-  
+
     const contractIsValid =
       typeof body?.pizza?.name === 'string' &&
       body.pizza.name.trim().length > 0 &&
@@ -130,19 +130,19 @@ export const options = {
       ) &&
       Number.isFinite(body?.calories) &&
       typeof body?.vegetarian === 'boolean';
-  
+
     check(
       response,
       {
         'status is 200': (r) => r.status === 200,
-  
+
         'response contract is valid': () => contractIsValid,
-  
+
         'vegetarian restriction is respected': () =>
           contractIsValid &&
           body.vegetarian === true &&
           ingredients.every((ingredient) => ingredient.vegetarian === true),
-  
+
         'excluded ingredient is absent': () =>
           contractIsValid &&
           ingredients.every(
@@ -150,7 +150,7 @@ export const options = {
               ingredient.name.trim().toLowerCase() !==
               testCase.excludedIngredient.toLowerCase()
           ),
-  
+
         'calorie limit is respected': () =>
           contractIsValid &&
           body.calories >= 0 &&
